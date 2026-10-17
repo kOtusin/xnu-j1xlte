@@ -225,7 +225,7 @@ bsdthread_create(__unused struct proc *p, struct bsdthread_create_args  *uap, us
 #if defined(__i386__) || defined(__x86_64__)
 	stackaddr = 0xB0000000;
 #elif defined(__arm__)
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
     stackaddr = 0x20000000;
 #else
     stackaddr = 0x2FD00000;
@@ -357,7 +357,7 @@ bsdthread_create(__unused struct proc *p, struct bsdthread_create_args  *uap, us
 		/* Set up ARM registers... */
 		arm_thread_state_t state;
 		arm_thread_state_t *ts = &state;
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
         bzero(ts, sizeof(*ts));
         ts->cpsr = 0x10U | (((uint32_t)p->p_threadstart & 1U) ? 0x20U : 0);
 #endif
@@ -367,7 +367,7 @@ bsdthread_create(__unused struct proc *p, struct bsdthread_create_args  *uap, us
 		ts->r[7] = 0;
 
 		ts->pc = (uint32_t)p->p_threadstart;
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
         ts->pc &= ~1U;
 #endif
 		ts->sp = (int)((vm_offset_t)(th_stack-C_32_STK_ALIGN));
@@ -1079,7 +1079,7 @@ workqueue_addnewthread(struct workqueue *wq, boolean_t oc_thread)
 #if defined(__i386__) || defined(__x86_64__)
 	stackaddr = 0xB0000000;
 #elif defined(__arm__)
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
     stackaddr = 0x20000000;
 #else
     stackaddr = 0x2FE00000;
@@ -2305,7 +2305,7 @@ setup_wqthread(proc_t p, thread_t th, boolean_t overcommit, uint32_t priority, i
      * Set up ARM registers and call.
      */
     {
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
         arm_thread_state_t state;
         arm_thread_state_t *ts = &state;
         uint32_t pthread_addr = (uint32_t)(tl->th_stackaddr +

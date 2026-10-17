@@ -57,7 +57,7 @@ kern_return_t kxld_object_init_from_macho(KXLDObject *object,
     u_char *file, u_long size, const char *name,
     struct kxld_array *section_order,
     cpu_type_t cputype, cpu_subtype_t cpusubtype, KXLDFlags flags)
-    __attribute__((nonnull(1,2,4) visibility("hidden")));
+    __attribute__((nonnull(1,2,4), visibility("hidden")));
 
 void kxld_object_clear(KXLDObject *object)
     __attribute__((nonnull, visibility("hidden")));

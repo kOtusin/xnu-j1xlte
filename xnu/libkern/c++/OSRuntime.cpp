@@ -616,3 +616,51 @@ __throw_length_error(const char *msg __unused)
 
 };
 
+
+/*********************************************************************
+* Modern-clang compatibility shims (J1/LEO Linux cross builds)
+*********************************************************************/
+extern "C" int __cxa_atexit(void (*dtor)(void *), void *obj, void *dso);
+
+int
+__cxa_atexit(void (*dtor)(void *), void *obj, void *dso)
+{
+	/*
+	 * Kernel static C++ objects are torn down through the
+	 * __mod_termfunc_section machinery instead; nothing to do here.
+	 */
+#pragma unused(dtor, obj, dso)
+	return 0;
+}
+
+#if defined(__arm__) || defined(__arm64__)
+/*
+ * Newer clang uniquifies builtin calls that collide with differently-scoped
+ * declarations by emitting "memcpy.N"/"memset.N" local symbol names.
+ * Alias them back onto the kernel's real implementations.
+ */
+__asm__(".text\n.thumb\n"
+	".thumb_func\n.globl _memcpy.2\n_memcpy.2:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.47\n_memcpy.47:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.48\n_memcpy.48:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.49\n_memcpy.49:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.50\n_memcpy.50:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.51\n_memcpy.51:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.52\n_memcpy.52:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.53\n_memcpy.53:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.54\n_memcpy.54:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.55\n_memcpy.55:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.56\n_memcpy.56:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.57\n_memcpy.57:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.58\n_memcpy.58:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.59\n_memcpy.59:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.60\n_memcpy.60:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.61\n_memcpy.61:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.396\n_memcpy.396:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.406\n_memcpy.406:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.413\n_memcpy.413:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memcpy.416\n_memcpy.416:\n b.w _memcpy\n"
+	".thumb_func\n.globl _memset.116\n_memset.116:\n b.w _memset\n"
+	".thumb_func\n.globl _memset.188\n_memset.188:\n b.w _memset\n");
+#endif
+

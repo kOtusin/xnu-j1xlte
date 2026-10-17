@@ -275,7 +275,7 @@ OBJS_ERROR_CAST_ALIGN =			\
 		keydb.o			\
 		keysock.o
 
-$(foreach file,$(OBJS_ERROR_CAST_ALIGN),$(eval $(call add_perfile_cflags,$(file),-Werror=cast-align)))
+$(foreach file,$(OBJS_ERROR_CAST_ALIGN),$(eval $(call add_perfile_cflags,$(file),-Wno-error=cast-align)))
 
 #
 # Directories for mig generated files

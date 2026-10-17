@@ -269,7 +269,7 @@ bsd_mbuf_cluster_reserve(boolean_t *overridden)
 	if (mbuf_pool != 0)
 		ncl = (mbuf_pool << MBSHIFT) >> MCLSHIFT;
 
-#ifdef BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_QSD8250_LEO
 	/* The inherited 128-cluster fallback leaves no pure 4KB reserve.
 	 * A 1MB pool caps sockets below syslogd's 128KB receive request.
 	 * Add only 8KB to enter the existing >1MB socket-budget policy.
@@ -302,7 +302,7 @@ bsd_mbuf_cluster_reserve(boolean_t *overridden)
 		nmbclusters = P2ROUNDDOWN(nmbclusters, NCLPBG);
 	}
 	mbuf_poolsz = nmbclusters << MCLSHIFT;
-#ifdef BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_QSD8250_LEO
 	printf("Leo mbuf: managed=%u KiB pool=%u KiB ncl=%u\n",
 	    (unsigned int)(sane_size >> 10), mbuf_poolsz >> 10, nmbclusters);
 #endif

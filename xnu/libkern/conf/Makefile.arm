@@ -2,7 +2,7 @@
 #BEGIN	Machine dependent Makefile fragment for i386
 ######################################################################
 
-OSAtomic.o_SFLAGS_ADD += -no-integrated-as
+# Files here assemble fine with clang's integrated assembler.
 
 ######################################################################
 #END	Machine dependent Makefile fragment for i386

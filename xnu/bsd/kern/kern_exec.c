@@ -986,16 +986,28 @@ grade:
 		}
 		task_set_dyld_info(task, load_result.all_image_info_addr,
 		    load_result.all_image_info_size);
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+		kprintf("J1EXEC dyldinfo done\n");
+#endif
 	}
     
 	/* Avoid immediate VM faults back into kernel */
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+	kprintf("J1EXEC prefault begin\n");
+#endif
 	exec_prefault_data(p, imgp, &load_result);
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+	kprintf("J1EXEC prefault done\n");
+#endif
 
 	if (vfexec || spawn) {
 		vm_map_switch(old_map);
 	}
 	/* Set the entry point */
 	thread_setentrypoint(thread, load_result.entry_point);
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+	kprintf("J1EXEC entry set\n");
+#endif
 
 	/* Stop profiling */
 	stopprofclock(p);
@@ -1010,6 +1022,9 @@ grade:
 	 * already active.  MAY BLOCK!
 	 */
 	_aio_exec( p );
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+	kprintf("J1EXEC aio done\n");
+#endif
 
 
 #if SYSV_SHM
@@ -1138,6 +1153,9 @@ grade:
 	if (imgp->ip_px_sa != NULL) {
 		psa = (struct _posix_spawnattr *) imgp->ip_px_sa;
 		if (psa->psa_flags & POSIX_SPAWN_START_SUSPENDED) {
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+			kprintf("J1EXEC child suspended\n");
+#endif
 			proc_lock(p);
 			p->p_stat = SSTOP;
 			proc_unlock(p);
@@ -1228,6 +1246,9 @@ if (!spawn)
 	}
 
 bad:
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+	kprintf("J1EXEC imgact return err=%d\n", error);
+#endif
 	return(error);
 }
 
@@ -2045,6 +2066,10 @@ posix_spawn(proc_t ap, struct posix_spawn_args *uap, int32_t *retval)
 	}
 #endif
 	error = exec_activate_image(imgp);
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+	kprintf("J1EXEC activate=%d spawn=%d\n", error,
+		(imgp->ip_flags & IMGPF_SPAWN) ? 1 : 0);
+#endif
 #if BOARD_CONFIG_ARMPBA8
 	if (ios7lab_preferences_spawn)
 		ios7lab_preferences_activating = FALSE;
@@ -2453,6 +2478,10 @@ __mac_execve(proc_t p, struct __mac_execve_args *uap, int32_t *retval)
 #endif
 
 	error = exec_activate_image(imgp);
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+	kprintf("J1EXEC activate=%d spawn=%d\n", error,
+		(imgp->ip_flags & IMGPF_SPAWN) ? 1 : 0);
+#endif
 #if BOARD_CONFIG_ARMPBA8
 	if (ios7lab_exec_trace)
 		printf("IOS7LAB exec trace pid=%d comm=%s preferences=%d error=%d path=%s\n",
@@ -2460,14 +2489,26 @@ __mac_execve(proc_t p, struct __mac_execve_args *uap, int32_t *retval)
 #endif
 
 	kauth_cred_unref(&context.vc_ucred);
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+	kprintf("J1EXEC cred_unref done\n");
+#endif
 
 	/* Image not claimed by any activator? */
 	if (error == -1)
 		error = ENOEXEC;
 
 	if (error == 0) {
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+		kprintf("J1EXEC resettextvp begin\n");
+#endif
 		exec_resettextvp(p, imgp);
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+		kprintf("J1EXEC resettextvp done\n");
+#endif
 		error = check_for_signature(p, imgp);
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+		kprintf("J1EXEC sigcheck done err=%d\n", error);
+#endif
 	}	
 	if (imgp->ip_vp != NULLVP)
 		vnode_put(imgp->ip_vp);
@@ -2478,6 +2519,9 @@ __mac_execve(proc_t p, struct __mac_execve_args *uap, int32_t *retval)
 		mac_cred_label_free(imgp->ip_execlabelp);
 	if (imgp->ip_scriptlabelp)
 		mac_vnode_label_free(imgp->ip_scriptlabelp);
+#endif
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+	kprintf("J1EXEC post-free\n");
 #endif
 	if (!error) {
 		struct uthread	*uthread;
@@ -2499,6 +2543,9 @@ exit_with_error:
 	if (bufp != NULL) {
 		FREE(bufp, M_TEMP);
 	}
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+	kprintf("J1EXEC execve return err=%d\n", error);
+#endif
 #if BOARD_CONFIG_ARMPBA8
 	if (ios7lab_exec_path != NULL)
 		FREE(ios7lab_exec_path, M_TEMP);
