@@ -121,7 +121,7 @@ endif
 export SUPPORTED_I386_MACHINE_CONFIGS := DEFAULT
 export SUPPORTED_X86_64_MACHINE_CONFIGS := DEFAULT
 export SUPPORTED_ARM_MACHINE_CONFIGS := S5L8920X S5L8922X S5L8930X ARMPBA8 SUN4I OMAP3530 OMAP335X RASPBERRYPI \
-					OMAP3430_RX51 ARM_RVEB_V6 S5L8720X S5L8900XRB MSM8960_TOUCHPAD IMX53 QSD8250_LEO
+					OMAP3430_RX51 ARM_RVEB_V6 S5L8720X S5L8900XRB MSM8960_TOUCHPAD IMX53 QSD8250_LEO EXYNOS3475_J1XLTE
 export SUPPORTED_ARM64_MACHINE_CONFIGS := DEFAULT VEXPRESS 
 
 #
@@ -248,7 +248,12 @@ export DEFINES = -DAPPLE -DKERNEL -DKERNEL_PRIVATE -DXNU_KERNEL_PRIVATE \
 # Compiler command
 #
 KCC  := $(CC)
+ifeq ($(UNAME_S),Linux)
+# Drive the Mach-O link through clang with the classic ld64 backend.
+KC++ := $(CXX) --target=armv7-apple-darwin -mthumb -fuse-ld=/home/kotu/j1ios/ios7/j1/ld64-wrapper
+else
 KC++ := $(CXX)
+endif
 
 #
 # Compiler warning flags
@@ -321,6 +326,13 @@ ARCH_FLAGS_ARM_OMAP3430_RX51 = -arch armv7
 ARCH_FLAGS_ARM_OMAP335X	= -arch armv7
 ARCH_FLAGS_ARM_ARMPBA8	= -arch armv7
 ARCH_FLAGS_ARM_QSD8250_LEO = -arch armv7
+ARCH_FLAGS_ARM_EXYNOS3475_J1XLTE = -arch armv7
+
+# Linux cross builds: clang has no -arch; use target triple + Mach-O output.
+ifeq ($(UNAME_S),Linux)
+ARCH_FLAGS_ARM_QSD8250_LEO = --target=armv7-apple-darwin -mthumb
+ARCH_FLAGS_ARM_EXYNOS3475_J1XLTE = --target=armv7-apple-darwin -mthumb
+endif
 ARCH_FLAGS_ARM_MSM8960_TOUCHPAD	= -arch armv7
 ARCH_FLAGS_ARM_RASPBERRYPI	= -arch armv6
 ARCH_FLAGS_ARM_ARM_RVEB_V6	= -arch armv6
@@ -367,6 +379,14 @@ export CFLAGS_RELEASE 	=
 export CFLAGS_DEVELOPMENT 	=
 export CFLAGS_DEBUG 	= -fstack-protector-all
 export CFLAGS_PROFILE 	= -pg
+
+# Linux hosts: the stock clang backend is stricter and emits stack-protector
+# prologues that this old ARM kernel miscompiles at -O0. Disable it for ARM.
+ifeq ($(UNAME_S),Linux)
+ifeq ($(ARCH_CONFIG),ARM)
+CFLAGS_DEBUG := $(filter-out -fstack-protector-all,$(CFLAGS_DEBUG))
+endif
+endif
 
 export CFLAGS_I386 	= -static -Di386 -DI386 -D__I386__ \
 				-DPAGE_SIZE_FIXED -msoft-float \
@@ -423,6 +443,15 @@ export CFLAGS 	= $(CFLAGS_GEN) \
 #
 
 OTHER_CXXFLAGS	=
+
+# Linux hosts: relax warnings that newer clang promotes to errors, and
+# disable the stack protector that miscompiles this old ARM kernel.
+ifeq ($(UNAME_S),Linux)
+OTHER_CFLAGS += -Wno-error=int-conversion -Wno-error=cast-align -Wno-error=implicit-function-declaration -Wno-error=implicit-int -Wno-error=deprecated-declarations
+OTHER_CXXFLAGS += -Wno-register -Wno-c++11-narrowing -Wno-error=implicit-function-declaration -Wno-error=deprecated-declarations
+OTHER_CFLAGS += -fno-stack-protector
+OTHER_CXXFLAGS += -fno-stack-protector
+endif
 
 CXXFLAGS_GEN  = -fapple-kext $(OTHER_CXXFLAGS)
 

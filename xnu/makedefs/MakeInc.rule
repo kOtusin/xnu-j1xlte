@@ -620,7 +620,11 @@ $(TARGET)/mach_kernel: $(addprefix $(TARGET)/,$(foreach component,$(COMPONENT_LI
 		[ -h  ${OBJROOT}/$${kernel_file_name} ] || $(LN) $(TARGET)/mach_kernel ${OBJROOT}/$${kernel_file_name};	\
 	fi;
 	@echo STRIP mach_kernel
-	$(_v)$(STRIP) $(STRIP_FLAGS) $(TARGET)/mach_kernel.sys -o $(TARGET)/mach_kernel
+	$(_v)if [ $(UNAME_S) = Linux ]; then \
+		cp -f $(TARGET)/mach_kernel.sys $(TARGET)/mach_kernel; \
+	else \
+		$(STRIP) $(STRIP_FLAGS) $(TARGET)/mach_kernel.sys -o $(TARGET)/mach_kernel; \
+	fi
 
 	$(_v)kernel_config=$(KERNEL_CONFIG);				   \
 	onearch=$(ARCH_CONFIG);								   \
