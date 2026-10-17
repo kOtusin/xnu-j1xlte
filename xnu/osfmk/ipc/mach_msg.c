@@ -315,6 +315,32 @@ mach_msg_format_0_trailer_t trailer_template = {
  *		MACH_SEND_INTERRUPTED	Delivery interrupted.
  */
 
+/*
+ *	Routine:	mach_msg_destroy_from_kernel
+ *	Purpose:
+ *		Destroy a message (usually an error reply) that was
+ *		built in kernel memory by a MIG server routine.
+ *		Cleans up port rights and out-of-line memory described
+ *		by the message's descriptors.
+ */
+void
+mach_msg_destroy_from_kernel(
+	mach_msg_header_t       *msg)
+{
+	ipc_kmsg_t              kmsg;
+
+	if (!(msg->msgh_bits & MACH_MSGH_BITS_COMPLEX))
+		return;
+
+	kmsg = ipc_kmsg_alloc(msg->msgh_size);
+	if (kmsg == IKM_NULL)
+		return;
+
+	memcpy((void *) kmsg->ikm_header, (const void *) msg, msg->msgh_size);
+
+	ipc_kmsg_destroy(kmsg);
+}
+
 mach_msg_return_t
 mach_msg_send(
 	mach_msg_header_t	*msg,

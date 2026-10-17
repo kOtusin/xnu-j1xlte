@@ -504,7 +504,7 @@ void get_cachetype_cp15()
                 type == CACHE_SEP_CACHE) {
                 sel = i << 1;
                 __asm __volatile("mcr p15, 2, %0, c0, c0, 0"::"r"(sel));
-#ifdef BOARD_CONFIG_QSD8250_LEO
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
                 __asm __volatile("isb sy" ::: "memory");
 #endif
                 __asm __volatile("mrc p15, 1, %0, c0, c0, 0":"=r"(csize));
@@ -515,7 +515,7 @@ void get_cachetype_cp15()
             if (type == CACHE_ICACHE || type == CACHE_SEP_CACHE) {
                 sel = (i << 1) | 1;
                 __asm __volatile("mcr p15, 2, %0, c0, c0, 0"::"r"(sel));
-#ifdef BOARD_CONFIG_QSD8250_LEO
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
                 __asm __volatile("isb sy" ::: "memory");
 #endif
                 __asm __volatile("mrc p15, 1, %0, c0, c0, 0":"=r"(csize));
@@ -524,7 +524,7 @@ void get_cachetype_cp15()
             i++;
             clevel >>= 3;
         }
-#ifdef BOARD_CONFIG_QSD8250_LEO
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
         sel = 0;
         __asm __volatile("mcr p15, 2, %0, c0, c0, 0"::"r"(sel));
         __asm __volatile("isb sy" ::: "memory");

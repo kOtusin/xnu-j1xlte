@@ -147,6 +147,18 @@ static void machine_conf(void)
 {
     machine_info.memory_size = (typeof(machine_info.memory_size)) mem_size;
     machine_info.max_mem = (typeof(machine_info.max_mem)) max_mem;
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+    /*
+     * J1 bring-up (platform-specific, Exynos 3475):
+     * mc/commpage size per-CPU arrays from ml_get_max_cpus() (mcache.c:181,
+     * uipc_mbuf.c:1541, pthread_synch.c:1174).  This SoC boots
+     * uniprocessor; without this the count stays 0, those arrays become
+     * zero-sized and mcache's MCACHE_CPU() writes past the allocation
+     * (cc_filled == NULL) -> kernel data abort in mcache_free_ext during
+     * bsd_init.  Mirrors hd2base/osfmk/arm/model_dep.c.
+     */
+    ml_init_max_cpus(1);
+#endif
 }
 
 unsigned int debug_boot_arg;

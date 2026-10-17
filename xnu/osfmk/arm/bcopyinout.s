@@ -76,8 +76,8 @@ EnterARM(copyinmsg)
     str     r11, [r10, TH_RECOVER]
 	mov	r0, #0xE    /* EFAULT */
 	cmp	r3, #0x00
-	ldmgtfd	sp!, {r4-r7}		/* r3 > 0 Restore r4-r7 */
-	ldmltfd	sp!, {r4-r9}		/* r3 < 0 Restore r4-r9 */
+	ldmiagt	sp!, {r4-r7}		/* r3 > 0 Restore r4-r7 */
+	ldmialt	sp!, {r4-r9}		/* r3 < 0 Restore r4-r9 */
 	ldmfd	sp!, {r10-r11, pc}
 
 .Lcopyin_guts:
@@ -110,7 +110,7 @@ EnterARM(copyinmsg)
 
 	/* Quad-align the destination buffer */
 	tst	r1, #0x07		/* Already quad aligned? */
-	ldrnet	ip, [r0], #0x04
+	ldrtne	ip, [r0], #0x04
 	strne	ip, [r1], #0x04
 	subne	r2, r2, #0x04
 	stmfd	sp!, {r4-r9}		/* Free up some registers */
@@ -179,7 +179,7 @@ EnterARM(copyinmsg)
 
 .Lcopyin_w_lessthan128:
 	adds	r2, r2, #0x80		/* Adjust for extra sub */
-	ldmeqfd	sp!, {r4-r9}
+	ldmiaeq	sp!, {r4-r9}
 	RETeq
 	subs	r2, r2, #0x20
 	blt	.Lcopyin_w_lessthan32
@@ -204,7 +204,7 @@ EnterARM(copyinmsg)
 
 .Lcopyin_w_lessthan32:
 	adds	r2, r2, #0x20		/* Adjust for extra sub */
-	ldmeqfd	sp!, {r4-r9}
+	ldmiaeq	sp!, {r4-r9}
 	RETeq				/* Return now if done */
 
 	and	r4, r2, #0x18
@@ -238,17 +238,17 @@ EnterARM(copyinmsg)
 
 .Lcopyin_w_less_than8:
 	subs	r2, r2, #0x04
-	ldrget	ip, [r0], #0x04
+	ldrtge	ip, [r0], #0x04
 	strge	ip, [r1], #0x04
 	RETeq				/* Return now if done */
 	addlt	r2, r2, #0x04
 	ldrbt	ip, [r0], #0x01
 	cmp	r2, #0x02
-	ldrgebt	r2, [r0], #0x01
+	ldrbtge	r2, [r0], #0x01
 	strb	ip, [r1], #0x01
-	ldrgtbt	ip, [r0]
-	strgeb	r2, [r1], #0x01
-	strgtb	ip, [r1]
+	ldrbtgt	ip, [r0]
+	strbge	r2, [r1], #0x01
+	strbgt	ip, [r1]
 	RET
 
 /*
@@ -303,7 +303,7 @@ EnterARM(copyinmsg)
 	bge	.Lcopyin_bad1_loop16
 
 	adds	r2, r2, #0x10
-	ldmeqfd	sp!, {r4-r7}
+	ldmiaeq	sp!, {r4-r7}
 	RETeq				/* Return now if done */
 	subs	r2, r2, #0x04
 	sublt	r0, r0, #0x03
@@ -364,7 +364,7 @@ EnterARM(copyinmsg)
 	bge	.Lcopyin_bad2_loop16
 
 	adds	r2, r2, #0x10
-	ldmeqfd	sp!, {r4-r7}
+	ldmiaeq	sp!, {r4-r7}
 	RETeq				/* Return now if done */
 	subs	r2, r2, #0x04
 	sublt	r0, r0, #0x02
@@ -425,7 +425,7 @@ EnterARM(copyinmsg)
 	bge	.Lcopyin_bad3_loop16
 
 	adds	r2, r2, #0x10
-	ldmeqfd	sp!, {r4-r7}
+	ldmiaeq	sp!, {r4-r7}
 	RETeq				/* Return now if done */
 	subs	r2, r2, #0x04
 	sublt	r0, r0, #0x01
@@ -496,8 +496,8 @@ EnterARM(copyoutmsg)
     str     r11, [r10, TH_RECOVER]
 	mov r0, #0x0e
 	cmp	r3, #0x00
-	ldmgtfd	sp!, {r4-r7}		/* r3 > 0 Restore r4-r7 */
-	ldmltfd	sp!, {r4-r9}		/* r3 < 0 Restore r4-r9 */
+	ldmiagt	sp!, {r4-r7}		/* r3 > 0 Restore r4-r7 */
+	ldmialt	sp!, {r4-r9}		/* r3 < 0 Restore r4-r9 */
 	ldmfd	sp!, {r10-r11, pc}
 
 .Lcopyout_guts:
@@ -532,7 +532,7 @@ EnterARM(copyoutmsg)
 	tst	r0, #0x07		/* Already quad aligned? */
 	ldrne	ip, [r0], #0x04
 	subne	r2, r2, #0x04
-	strnet	ip, [r1], #0x04
+	strtne	ip, [r1], #0x04
 	
 	stmfd	sp!, {r4-r9}		/* Free up some registers */
 	mov	r3, #-1			/* Signal restore r4-r9 */
@@ -600,7 +600,7 @@ EnterARM(copyoutmsg)
 
 .Lcopyout_w_lessthan128:
 	adds	r2, r2, #0x80		/* Adjust for extra sub */
-	ldmeqfd	sp!, {r4-r9}
+	ldmiaeq	sp!, {r4-r9}
 	RETeq				/* Return now if done */
 	subs	r2, r2, #0x20
 	blt	.Lcopyout_w_lessthan32
@@ -625,7 +625,7 @@ EnterARM(copyoutmsg)
 
 .Lcopyout_w_lessthan32:
 	adds	r2, r2, #0x20		/* Adjust for extra sub */
-	ldmeqfd	sp!, {r4-r9}
+	ldmiaeq	sp!, {r4-r9}
 	RETeq				/* Return now if done */
 
 	and	r4, r2, #0x18
@@ -660,16 +660,16 @@ EnterARM(copyoutmsg)
 .Lcopyout_w_less_than8:
 	subs	r2, r2, #0x04
 	ldrge	ip, [r0], #0x04
-	strget	ip, [r1], #0x04
+	strtge	ip, [r1], #0x04
 	RETeq				/* Return now if done */
 	addlt	r2, r2, #0x04
 	ldrb	ip, [r0], #0x01
 	cmp	r2, #0x02
-	ldrgeb	r2, [r0], #0x01
+	ldrbge	r2, [r0], #0x01
 	strbt	ip, [r1], #0x01
-	ldrgtb	ip, [r0]
-	strgebt	r2, [r1], #0x01
-	strgtbt	ip, [r1]
+	ldrbgt	ip, [r0]
+	strbtge	r2, [r1], #0x01
+	strbtgt	ip, [r1]
 	RET
 
 /*
@@ -724,7 +724,7 @@ EnterARM(copyoutmsg)
 	bge	.Lcopyout_bad1_loop16
 
 	adds	r2, r2, #0x10
-	ldmeqfd	sp!, {r4-r7}
+	ldmiaeq	sp!, {r4-r7}
 	RETeq				/* Return now if done */
 	subs	r2, r2, #0x04
 	sublt	r0, r0, #0x03
@@ -785,7 +785,7 @@ EnterARM(copyoutmsg)
 	bge	.Lcopyout_bad2_loop16
 
 	adds	r2, r2, #0x10
-	ldmeqfd	sp!, {r4-r7}
+	ldmiaeq	sp!, {r4-r7}
 	RETeq				/* Return now if done */
 	subs	r2, r2, #0x04
 	sublt	r0, r0, #0x02
@@ -846,7 +846,7 @@ EnterARM(copyoutmsg)
 	bge	.Lcopyout_bad3_loop16
 
 	adds	r2, r2, #0x10
-	ldmeqfd	sp!, {r4-r7}
+	ldmiaeq	sp!, {r4-r7}
 	RETeq				/* Return now if done */
 	subs	r2, r2, #0x04
 	sublt	r0, r0, #0x01
@@ -1037,9 +1037,9 @@ copyio_kernel:
 .Lcopyio_copy2:
     subs    r2, r2, #2
     ldrb    r3, [r0], #1
-    ldrplb  r12, [r0], #1
+    ldrbpl  r12, [r0], #1
     strb    r3, [r1], #1
-    strplb  r12, [r1], #1
+    strbpl  r12, [r1], #1
     bhi     .Lcopyio_copy2
 .Lcopyio_exit:
     movs    r0, #0

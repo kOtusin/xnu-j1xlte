@@ -120,7 +120,7 @@ genassym.o: $(SOURCE_DIR)/$(COMPONENT)/$(GENASSYM_LOCATION)/genassym.c
 	$(_v)${KCC} $(subst -flto,,${CFLAGS}) -MD ${_HOST_EXTRA_CFLAGS} -S -o ${@} -c ${INCFLAGS} $<
 
 assym.s: genassym.o
-	$(_v)sed -e '/#DEFINITION#/!d' -e 's/^.*#DEFINITION#//' -e 's/\$$//' -e 'p' -e 's/#//2' -e 's/[^A-Za-z0-9_]*\([A-Za-z0-9_]*\)/ \1_NUM/2' genassym.o > ${@}
+	$(_v)sed -e '/DEFINITION#/!d' -e 's/^.*DEFINITION#//' -e 's/\$$//' -e 'p' -e 's/#//2' -e 's/[^A-Za-z0-9_]*\([A-Za-z0-9_]*\)/ \1_NUM/2' genassym.o > ${@}
 
 ${SOBJS}: assym.s
 

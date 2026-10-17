@@ -192,6 +192,16 @@ _cnputc(char c)
 	extern void ios7leo_log_putc(char);
 	ios7leo_log_putc(c); /* try-only RAM producer, no SD or scheduling */
 #endif
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+	{
+	extern void ios7j1_debug_putc(char);
+	extern void ios7j1_fast_putc(char);
+		ios7j1_debug_putc(c); /* always-safe UART sink */
+		ios7j1_fast_putc(c); /* fast panel sink; self-disables once GUI owns panel */
+		if (c == '\n') ios7j1_debug_putc('\r');
+		return;
+	}
+#endif
 	/* The console device output routines are assumed to be
 	 * non-reentrant.
 	 */

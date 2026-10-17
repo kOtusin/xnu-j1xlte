@@ -332,6 +332,23 @@ void arm_vm_init(uint32_t mem_limit, boot_args * args)
     cpu_ttb = gTopOfKernel + L1_SIZE;
     bzero((void*)phys_to_virt(cpu_ttb), L1_SIZE);
 
+#ifdef BOARD_CONFIG_EXYNOS3475_J1XLTE
+    /* Seed the new tables with console/device identity sections BEFORE
+     * the switch, so early UART/FB/timers work immediately after. */
+    {
+        volatile unsigned int *l1 =
+            (volatile unsigned int *)phys_to_virt(cpu_ttb);
+        int idx;
+        const unsigned int devs[] = { 0x138, 0x10C, 0x100, 0x104 };
+
+        for (idx = 0; idx < 4; idx++)
+            l1[0x57E + idx] = ((0x57E05000u + idx * 0x100000u) & ~0xFFFFFu)
+                              | 0x402;
+        for (idx = 0; idx < 4; idx++)
+            l1[devs[idx]] = (devs[idx] << 20) | 0xC02;
+    }
+#endif
+
     identityBaseVA = gVirtBase;
     identityCachePA = cpu_ttb + L1_SIZE;    /* After the first initial TTB. */
     kdb_printf("arm_vm_init: L2 address for identity mappings...\n"
@@ -380,6 +397,10 @@ void arm_vm_init(uint32_t mem_limit, boot_args * args)
     vm_offset_t *vecpt_start = (vm_offset_t *)(first_avail), *vectp, *va_vecpt;
     vectp = (vm_offset_t *)addr_to_tte(phys_to_virt(cpu_ttb), VECTORS_BASE);
     *vectp = (((uint32_t) vecpt_start) | L1_TYPE_PTE);
+    /* BRING-UP (J1): zero the vector L2 so the commpage-alias slot at
+     * 0xFFFF4000 (same L2 as the vectors) starts empty; leftover
+     * bootloader data otherwise fails the pmap alias assert. */
+    memset((void *)phys_to_virt(vecpt_start), 0, PAGE_SIZE);
     va_vecpt = (vm_offset_t *)(phys_to_virt(vecpt_start) + pte_offset(VECTORS_BASE));
 
     /* NS-VBAR support */

@@ -1,22 +1,12 @@
-#
-# -O2 may work for you. -O2 might not. Your results
-# may vary.
-#
+######################################################################
+#BEGIN	Machine dependent Makefile fragment for arm
+######################################################################
 
-export CFLAGS_RELEASEARM = -O0
-export CFLAGS_DEVELOPMENTARM = -O0
-export CFLAGS_DEBUGARM = -O0
-export CFLAGS_PROFILEARM = -O0
+# Files here assemble fine with clang's integrated assembler.
 
-bcopyinout.o_SFLAGS_ADD += -no-integrated-as
-
-ifeq (-arch armv6,$(ARCH_FLAGS_ARM))
-locore.o_SFLAGS_ADD  += -no-integrated-as
-machine_routines_asm.o_SFLAGS_ADD += -no-integrated-as
-hw_lock.o_SFLAGS_ADD  += -no-integrated-as
-cache.o_SFLAGS_ADD += -no-integrated-as
-tlb-arm11.o_SFLAGS_ADD += -no-integrated-as
-endif
+######################################################################
+#END	Machine dependent Makefile fragment for arm
+######################################################################
 
 ifeq (-arch armv7,$(ARCH_FLAGS_ARM))
 vm_pageout.o_CFLAGS_ADD += -O0

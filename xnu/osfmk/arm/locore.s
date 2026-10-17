@@ -118,6 +118,29 @@ mmu_reinitialize:
     mov     r7, r7, lsl#20
     orr     r8, r7, r6
     str     r8, [r5]
+#ifdef BOARD_CONFIG_EXYNOS3475_J1XLTE
+    /* J1: identity-map S3C UART (1MB @0x13800000) and panel FB
+     * (2MB @0x57E00000) so early physical console/pixels work under
+     * the boot tables. r6=rw section template, r4=TTB. */
+    LoadConstantToReg(0x13800000, r7)
+    mov     r7, r7, lsr#20
+    add     r5, r4, r7, lsl#2
+    mov     r7, r7, lsl#20
+    orr     r8, r7, r6
+    str     r8, [r5]
+    LoadConstantToReg(0x57E00000, r7)
+    mov     r7, r7, lsr#20
+    add     r5, r4, r7, lsl#2
+    mov     r7, r7, lsl#20
+    orr     r8, r7, r6
+    str     r8, [r5]
+    LoadConstantToReg(0x57F00000, r7)
+    mov     r7, r7, lsr#20
+    add     r5, r4, r7, lsl#2
+    mov     r7, r7, lsl#20
+    orr     r8, r7, r6
+    str     r8, [r5]
+#endif
 
     mov     r7, pc, lsr#20
     add     r5, r4, r7, lsl#2   /* Make the TTE offset */
@@ -140,7 +163,7 @@ map:
     subs    r12, r12, #_1MB
     bne     map
 
-#ifdef BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_QSD8250_LEO
     /* Entry-only device identity maps: validated SMI aperture and MDP.
      * Type=section/AP=RW; C/B/TEX=0. No inherited TRE remapping is accepted.
      * Loader zeros all4096 TTB words and checks managedVA disjointness. */

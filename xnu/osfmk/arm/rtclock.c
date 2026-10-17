@@ -257,7 +257,7 @@ nanoseconds_to_absolutetime(uint64_t nanoseconds, uint64_t* result)
 
 void clock_get_system_nanotime(clock_sec_t * secs, clock_nsec_t * nanosecs)
 {
-#ifdef BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_QSD8250_LEO
     /* The hardware provider returns32768Hz GPT ticks; absolute time is ns. */
     uint64_t now = mach_absolute_time();
 #else

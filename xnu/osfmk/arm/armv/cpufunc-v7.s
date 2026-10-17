@@ -50,8 +50,8 @@ ENTRY(arm_context_switch)
 	dsb				@ data synchronization barrier
 	mrc	p15, 0, r2, c0, c0, 5	@ get MPIDR
 	cmp	r2, #0
-	orrlt	r0, r0, #0x5b		@ MP, cachable (Normal WB)
-	orrge	r0, r0, #0x1b		@ Non-MP, cacheable, normal WB
+	orrlt	r0, r0, #0x13		@ ckpt9-A: TTBR0 IRGN=WT,RGN=WT,S=1 (match WT linear map)
+	orrge	r0, r0, #0x13		@ ckpt9-A: TTBR0 IRGN=WT,RGN=WT,S=1 (match WT linear map)
 	mcr	p15, 0, r0, c2, c0, 0 	@ set the new TTB
 #ifdef MULTIPROCESSOR
 	mcr	p15, 0, r0, c8, c3, 0	@ flush the I+D

@@ -275,6 +275,27 @@ ios7leo_installd_fault(thread_t thread, const abort_information_context_t *ctx,
 #include "IOS7LeoAppFault057.h"
 #endif
 
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+/*
+ * BRING-UP (J1): report a per-fault line only once per distinct page so a
+ * progressing fault walk is visible on the console without flooding it.
+ */
+static int
+j1_uda_pg_once(unsigned int pg)
+{
+    static unsigned int set[64];
+    static int n = 0;
+    int i;
+
+    for (i = 0; i < n; i++)
+        if (set[i] == pg)
+            return 0;
+    if (n < 64)
+        set[n++] = pg;
+    return 1;
+}
+#endif
+
 static int __abort_count = 0;
 void sleh_abort(void *context, int reason)
 {
@@ -420,6 +441,17 @@ void sleh_abort(void *context, int reason)
                 map = thread->map;
 
                 /*
+
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+                {
+                    static unsigned int j1sr_abk = 0;
+                    if (j1sr_abk < 30) { j1sr_abk++;
+                        printf("J1SR abk: #%u dfar=%08x dfsr=%08x pc=%08x lr=%08x sp=%08x cpsr=%08x\n",
+                            j1sr_abk, (unsigned)dfar, (unsigned)dfsr, (unsigned)arm_ctx->pc,
+                            (unsigned)arm_ctx->lr, (unsigned)arm_ctx->sp, (unsigned)arm_ctx->cpsr);
+                    }
+                }
+#endif
                  * Attempt to fault the page.
                  */
                 __abort_count--;
@@ -428,6 +460,17 @@ void sleh_abort(void *context, int reason)
                              (dfsr & 0x800) ? (VM_PROT_READ | VM_PROT_WRITE)
                              : (VM_PROT_READ), FALSE, THREAD_UNINT, NULL,
                              vm_map_trunc_page(0));
+
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+                if (code == KERN_SUCCESS) {
+                    /* Bring-up (J1): the mapping is present in the active page
+                     * table (L1/L2 valid) yet the CPU keeps taking a
+                     * translation fault. Force a full local TLBIALL to drop the
+                     * stale TLB entry before retrying the instruction. */
+                    extern void arm_tlb_flushID(void);
+                    arm_tlb_flushID();
+                }
+#endif
 
                 if (code != KERN_SUCCESS) {
                     /*
@@ -590,6 +633,44 @@ void sleh_abort(void *context, int reason)
                  */
                 map = thread->map;
 
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+                {
+                    static unsigned int uda_total = 0;
+                    uda_total++;
+                    if (j1_uda_pg_once((unsigned)dfar >> 12))
+                        printf("UDA: far=%08x page=%08x pc=%08x lr=%08x fsr=%08x cpsr=%08x\n",
+                            (unsigned)dfar, (unsigned)(dfar & ~0xfffu),
+                            (unsigned)arm_ctx->pc, (unsigned)arm_ctx->lr,
+                            (unsigned)dfsr, (unsigned)arm_ctx->cpsr);
+                    if ((uda_total & 511U) == 0)
+                        printf("UDA: total faults=%u\n", uda_total);
+                }
+#endif
+
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+                {
+                    static unsigned int u_far = ~0u, u_pc = 0, u_fsr = 0, u_cnt = 0;
+                    if (dfar == u_far && arm_ctx->pc == u_pc && dfsr == u_fsr) {
+                        if (++u_cnt == 8)
+                            printf("UDA: LIVELOCK far=%08x pc=%08x fsr=%08x (fault not resolving)\n",
+                                (unsigned)dfar, (unsigned)arm_ctx->pc, (unsigned)dfsr);
+                    } else {
+                        u_far = (unsigned)dfar; u_pc = (unsigned)arm_ctx->pc;
+                        u_fsr = (unsigned)dfsr; u_cnt = 1;
+                    }
+                }
+#endif
+
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+                {
+                    static unsigned int j1sr_abu = 0;
+                    if (j1sr_abu < 30) { j1sr_abu++;
+                        printf("J1SR abu: #%u dfar=%08x dfsr=%08x pc=%08x lr=%08x sp=%08x cpsr=%08x\n",
+                            j1sr_abu, (unsigned)dfar, (unsigned)dfsr, (unsigned)arm_ctx->pc,
+                            (unsigned)arm_ctx->lr, (unsigned)arm_ctx->sp, (unsigned)arm_ctx->cpsr);
+                    }
+                }
+#endif
                 /*
                  * Attempt to fault the page.
                  */
@@ -600,6 +681,15 @@ void sleh_abort(void *context, int reason)
                              (dfsr & 0x800) ? (VM_PROT_READ | VM_PROT_WRITE)
                              : (VM_PROT_READ), FALSE, THREAD_UNINT, NULL,
                              vm_map_trunc_page(0));
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+                if (code == KERN_SUCCESS) {
+                    /* Same stale-TLB workaround as the kernel data-abort path:
+                     * the mapping is present (probe: active page table, valid
+                     * L1/L2) but the CPU re-faults. Drop the stale TLB entry. */
+                    extern void arm_tlb_flushID(void);
+                    arm_tlb_flushID();
+                }
+#endif
                 if ((code != KERN_SUCCESS) && (code != KERN_ABORTED)) {
 #if BOARD_CONFIG_QSD8250_LEO
                     leo_installd_fault_result=code;

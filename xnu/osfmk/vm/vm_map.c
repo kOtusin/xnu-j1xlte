@@ -2156,6 +2156,13 @@ StartAgain: ;
 		if (override_nx(map, alias) && cur_protection)
 		        cur_protection |= VM_PROT_EXECUTE;
 
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+		/* ckpt11: skip vm_map_pmap_enter for submaps. Dropping this
+		 * guard REGRESSES real hardware to a stall at J1SDRW rd#94209
+		 * (ckpt10, exact same signature) while QEMU still reaches
+		 * SpringBoard. Load-bearing on J1 — do not remove. */
+		if (!is_submap)
+#endif
 		vm_map_pmap_enter(map, start, end, 
 				  object, offset, cur_protection);
 	}

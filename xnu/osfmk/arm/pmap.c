@@ -202,7 +202,7 @@ uint32_t virt_begin, virt_end;  /* Virtual Address Space. */
 uint32_t avail_start, vm_first_phys;
 vm_page_t commpage;
 
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
 /* PC lab compatibility alias for original iOS 7 ARMv7 userspace. */
 #define IOS7LAB_COMMPAGE_ALIAS 0xFFFF4000U
 #endif
@@ -1257,6 +1257,17 @@ boolean_t pmap_is_noencrypt(ppnum_t pn)
     return (phys_attribute_test(pn, PMAP_OSPTE_TYPE_NOENCRYPT));
 }
 
+/*
+ * BRING-UP: the hardware page walker on Cortex-A7 does not snoop the
+ * data cache, so every descriptor written through the cached direct
+ * map MUST be cleaned to the point of coherency or the walker keeps
+ * reading stale zeroes from DRAM.
+ */
+static inline void pte_sync(const volatile void *va)
+{
+    __asm__ __volatile__("mcr p15, 0, %0, c7, c10, 1" :: "r"(va));
+}
+
 /**
  * pmap_set_noencrypt
  */
@@ -1678,6 +1689,13 @@ retry:
     OSAddAtomic(1,&map->pm_stats.resident_count);pmap_ledger_credit(map,task_ledgers.phys_mem,PAGE_SIZE);
     leo_mapping_wire(entry,wired);if(managed)leo_physical_wire_refresh(pn);
     *pte=leo_pte_build(map,va,pn,prot,wired);if(managed)UNLOCK_PVH(pn);
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+    /* J1: freshly paged-in executable user pages may hold stale I-cache
+     * lines (PIO-filled, never executed). Clean D + invalidate I so the
+     * first userspace fetch sees real code, not garbage. */
+    if(map!=kernel_pmap&&(prot&VM_PROT_EXECUTE))
+        arm_icache_sync_range(phys_to_virt((vm_offset_t)pn<<PAGE_SHIFT),PAGE_SIZE);
+#endif
     pmap_flush_tlbs(map,va,va+PAGE_SIZE);PMAP_UNLOCK(map);leo_node_free(spare);return KERN_SUCCESS;
 }
 static void leo_change_wiring(pmap_t map,vm_map_offset_t va,boolean_t wired)
@@ -2845,7 +2863,7 @@ void pmap_create_sharedpage(void)
      * Memset it.
      */
     memset((void *) _COMM_PAGE_BASE_ADDRESS, 0x00, PAGE_SIZE);
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
     /* Retain the control ABI at 0x40000000 and expose the same data read-only
      * at the address used by the original iOS 7 dyld. Offset 0x90 remains
      * zero: Cortex-A8 must take mach_absolute_time's syscall fallback,
@@ -3145,6 +3163,7 @@ void pmap_expand(pmap_t map, vm_offset_t v)
      * Overwrite the old L1 mapping in this region with a fresh L1 descriptor.
      */
     *tte = ((page->phys_page << PAGE_SHIFT) & L1_PTE_ADDR_MASK) | L1_TYPE_PTE;
+    pte_sync((void *) tte);
 
     /*
      * Flush the TLBs since we updated the page tables.
@@ -3239,7 +3258,7 @@ kern_return_t pmap_enter_options(pmap_t pmap, vm_map_offset_t va, ppnum_t pa, vm
 
         if (va == _COMM_PAGE_BASE_ADDRESS)
             template_pte |= L2_ACCESS_USER;
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
         if (pmap == kernel_pmap && va == IOS7LAB_COMMPAGE_ALIAS)
             template_pte |= L2_ACCESS_USER | L2_ACCESS_APX | L2_NX_BIT;
 #endif
@@ -3262,6 +3281,7 @@ kern_return_t pmap_enter_options(pmap_t pmap, vm_map_offset_t va, ppnum_t pa, vm
         }
 
         *(uint32_t *) pte = template_pte;
+        pte_sync(pte);
 
         /*
          * The work here is done, the PTE will now have new permissions. Flush the TLBs for the
@@ -3290,6 +3310,7 @@ kern_return_t pmap_enter_options(pmap_t pmap, vm_map_offset_t va, ppnum_t pa, vm
             pv_h = pai_to_pvh(pai);
 
             *(uint32_t *) pte = 0;
+            pte_sync(pte);
 
             if (!pmap_valid_page(pa))
                 goto EnterPte;
@@ -3431,7 +3452,7 @@ kern_return_t pmap_enter_options(pmap_t pmap, vm_map_offset_t va, ppnum_t pa, vm
      */
     if (va == _COMM_PAGE_BASE_ADDRESS)
         template_pte |= L2_ACCESS_USER;
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
     if (pmap == kernel_pmap && va == IOS7LAB_COMMPAGE_ALIAS)
         template_pte |= L2_ACCESS_USER | L2_ACCESS_APX | L2_NX_BIT;
 #endif
@@ -3442,6 +3463,15 @@ kern_return_t pmap_enter_options(pmap_t pmap, vm_map_offset_t va, ppnum_t pa, vm
     template_pte |= pmap_get_cache_attributes(pa);
 
     *(uint32_t *) pte = template_pte;
+    pte_sync(pte);
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+    /* J1: a freshly faulted executable page may hold stale I-cache lines
+     * (PIO-filled, never executed). pte_sync above only cleans D for the
+     * walker. Sync D + invalidate I via the linear map so the first fetch
+     * sees real code instead of garbage (silent HW-only hang). */
+    if (prot & VM_PROT_EXECUTE)
+        arm_icache_sync_range(phys_to_virt((vm_offset_t)pa << PAGE_SHIFT), PAGE_SIZE);
+#endif
 
     /* 
      * Unlock the pv. (if it is managed by us)
@@ -3642,6 +3672,7 @@ void pmap_init(void)
             dpte |= L2_ACCESS_APX;
         }
         *pte = dpte;
+        pte_sync(pte);
     }
 
     /*
@@ -4405,6 +4436,7 @@ kern_return_t pmap_nest(pmap_t grand, pmap_t subord, addr64_t va_start, addr64_t
          * Store the TTE.
          */
         *tte = target;
+        pte_sync((void *) tte);
         vaddr += (_1MB);
     }
     PMAP_UNLOCK(grand);
@@ -4455,6 +4487,7 @@ kern_return_t pmap_unnest(pmap_t grand, addr64_t vaddr, uint64_t size)
         if (tte == 0)
             panic("pmap_unnest: no tte, grand %p vaddr 0x%llx\n", grand, vaddr);
         *tte = 0;
+        pte_sync((void *) tte);
         vaddr += (_1MB);
     }
 

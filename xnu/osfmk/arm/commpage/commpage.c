@@ -54,7 +54,7 @@ void commpage_update_active_cpus(void)
 
     /* Lock the lock and update the global page value */
     simple_lock(&commpage_active_cpus_lock);
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
     /* Original iOS7 libdispatch sizes its heap from LOGICAL_CPUS at +0x36.
      * This reference machine runs exactly one present/active physical CPU. */
     assert(processor_avail_count == 1);
@@ -96,7 +96,7 @@ void commpage_populate(void)
     /* Update CPU count */
     simple_lock_init(&commpage_active_cpus_lock, 0);
     commpage_update_active_cpus();
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
 #if BOARD_CONFIG_QSD8250_LEO
     ml_cpu_info_t cpu_info;
     ml_cpu_get_info(&cpu_info);

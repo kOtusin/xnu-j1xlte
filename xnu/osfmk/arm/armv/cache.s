@@ -187,7 +187,7 @@ EnterARM(cache_initialize)
 #endif
 
     /* Enable L2 cache */
-#if defined(_ARM_ARCH_7) && !defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(_ARM_ARCH_7) && !defined(BOARD_CONFIG_QSD8250_LEO) && !defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
     mrc     p15, 0, r0, c1, c0, 1
     orr     r0, r0, #(1 << 1)
 

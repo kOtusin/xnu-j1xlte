@@ -79,7 +79,7 @@ void pe_identify_machine(__unused boot_args * args)
     gPEClockFrequencyInfo.bus_clock_rate_hz = gPEClockFrequencyInfo.bus_frequency_hz;
     gPEClockFrequencyInfo.cpu_clock_rate_hz = gPEClockFrequencyInfo.cpu_frequency_hz;
 
-#ifdef BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_QSD8250_LEO
     /* CPU/bus PLL rates are not derived yet. The real GPT provider installs
      * its32768Hz timebase/DEC rate; inherited i386 defaults are not facts. */
     bzero((void *) &gPEClockFrequencyInfo, sizeof(clock_frequency_info_t));

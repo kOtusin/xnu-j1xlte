@@ -773,6 +773,14 @@ pmap_steal_memory(
 			   VM_PROT_READ|VM_PROT_WRITE, VM_PROT_NONE,
 				VM_WIMG_USE_DEFAULT, FALSE);
 		/*
+		 * Zero the newly stolen page: callers (zones, pmap/VM
+		 * bootstrap structures) rely on this memory being zeroed.
+		 * On real hardware DRAM holds power-on garbage (0xff...),
+		 * so the backing physical page must be cleared here; on
+		 * emulators RAM happens to start zeroed, which hides this.
+		 */
+		bzero((void *) vaddr, PAGE_SIZE);
+		/*
 		 * Account for newly stolen memory
 		 */
 		vm_page_wire_count++;

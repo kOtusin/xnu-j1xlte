@@ -10,6 +10,8 @@ pexpert/arm/common/pe_identify_machine.c	standard
 pexpert/arm/pe_realview.c		standard
 pexpert/arm/pe_qsd8250_leo.c standard
 pexpert/arm/leo_qsd8250_timer.c standard
+pexpert/arm/pe_exynos3475_j1.c standard
+pexpert/arm/j1_timer.c standard
 pexpert/arm/pe_omap3430.c		standard
 pexpert/arm/pe_omap3530.c		standard
 pexpert/arm/pe_omap335x.c		standard

@@ -38,7 +38,12 @@
 #endif
 
 /* ARMv7 Cortex-A8-compatible architectural path; Scorpion is not Cortex-A8 hardware. */
-#ifdef BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_QSD8250_LEO
+#define __ARM_PROCESSOR_CLASS_CORTEX_A8__ 1
+#endif
+
+/* J1 Exynos3475 Cortex-A7: ARMv7-A, reuse A8-compatible path for bring-up. */
+#ifdef BOARD_CONFIG_EXYNOS3475_J1XLTE
 #define __ARM_PROCESSOR_CLASS_CORTEX_A8__ 1
 #endif
 

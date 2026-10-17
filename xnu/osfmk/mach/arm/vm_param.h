@@ -60,7 +60,7 @@
 #if defined (__arm__)
 
 #define VM_MIN_ADDRESS		((vm_address_t) 0x00000000)
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
 /* This ARM pmap uses a 1 GiB TTBR0 split. Ordinary user allocations must
  * stay below the kernel-owned commpage at 0x40000000. */
 #define VM_MAX_ADDRESS		((vm_address_t) 0x40000000)

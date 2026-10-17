@@ -454,7 +454,7 @@ mlckslow:
     str     r3, [r0]
     b       __enable_preemption
 mlckwait:
-#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_ARMPBA8 || BOARD_CONFIG_QSD8250_LEO || BOARD_CONFIG_EXYNOS3475_J1XLTE
     /* lock_wait requires the interlock; unlock needs bit 1 to wake waiters. */
     orr     r3, r3, #3
 #else

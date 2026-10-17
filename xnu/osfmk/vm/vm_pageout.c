@@ -3026,7 +3026,7 @@ uint32_t vm_pageout_considered_page_last = 0;
  * called once per-second via "compute_averages"
  */
 void
-compute_pageout_gc_throttle()
+compute_pageout_gc_throttle(void *arg __unused)
 {
 	if (vm_pageout_considered_page != vm_pageout_considered_page_last) {
 

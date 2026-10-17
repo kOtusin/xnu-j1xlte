@@ -44,5 +44,8 @@ extern void init_vfp(void);
 extern void vfp_context_save(struct arm_vfp_state *state);
 extern void vfp_context_load(struct arm_vfp_state *state);
 extern uint32_t vfp_enable_exception(boolean_t enable);
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+extern uint32_t ios7leo_read_fpexc(void);
+#endif
 
 #endif

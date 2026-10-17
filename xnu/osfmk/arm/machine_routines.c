@@ -310,7 +310,7 @@ kern_return_t ml_processor_register(cpu_id_t cpu_id,
                                     processor_t * processor_out,
                                     ipi_handler_t * ipi_handler)
 {
-#ifdef BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_QSD8250_LEO
     /* Bind the actual already bootstrapped single Scorpion master to IOKit.
      * No secondary CPU, allocation, synthetic processor or IPI implementation. */
     cpu_data_t *data = current_cpu_datap();

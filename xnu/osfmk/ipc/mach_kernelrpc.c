@@ -396,9 +396,56 @@ done:
 }
 #endif
 /* IOS7LEO_VM_END */
+/* IOS7J1_VM_BEGIN */
+#if BOARD_CONFIG_EXYNOS3475_J1XLTE
+#include <mach/vm_statistics.h>
+/* Original iOS7 ARM32 trap-10 passes a 64-bit size in r2:r3 and the flags
+ * in r4, but this port typedefs mach_vm_size_t as 32-bit (iOS 4.3 ABI), so
+ * the generated argument struct would read flags from the size-high word.
+ * Read the five saved words directly, as the ARMPBA8/LEO adapters do. */
+struct j1_vm_allocate_wire {
+    uint32_t target, addr, size_low, size_high, flags;
+};
+typedef char j1_vm_allocate_wire_size[
+    sizeof(struct j1_vm_allocate_wire) == 20 ? 1 : -1];
+
+static kern_return_t
+j1_vm_allocate(struct j1_vm_allocate_wire *wire)
+{
+    uint64_t address64 = 0;
+    mach_vm_offset_t address32 = 0;
+    task_t task = port_name_to_task(wire->target);
+    kern_return_t rv = MACH_SEND_INVALID_DEST;
+
+    if (task != current_task())
+        goto done;
+    if (copyin((user_addr_t)wire->addr, (char *)&address64, sizeof(address64)))
+        goto done;
+    if (wire->size_high ||
+        (!(wire->flags & VM_FLAGS_ANYWHERE) && (address64 >> 32))) {
+        rv = KERN_INVALID_ARGUMENT;
+        goto done;
+    }
+    address32 = (wire->flags & VM_FLAGS_ANYWHERE) ? 0 : (mach_vm_offset_t)address64;
+    rv = mach_vm_allocate(task->map, &address32, wire->size_low, wire->flags);
+    if (rv == KERN_SUCCESS) {
+        address64 = (uint64_t)address32;
+        rv = copyout(&address64, (user_addr_t)wire->addr, sizeof(address64));
+    }
+done:
+    if (task)
+        task_deallocate(task);
+    return rv;
+}
+#endif
+/* IOS7J1_VM_END */
 int
 _kernelrpc_mach_vm_allocate_trap(struct _kernelrpc_mach_vm_allocate_trap_args *args)
 {
+#if BOARD_CONFIG_EXYNOS3475_J1XLTE
+    return j1_vm_allocate((struct j1_vm_allocate_wire *)args);
+#endif
+
 /* IOS7LEO_VM_BEGIN */
 #if BOARD_CONFIG_QSD8250_LEO
     return ios7leo_vm_allocate((struct ios7leo_vm_allocate_wire *)args);
