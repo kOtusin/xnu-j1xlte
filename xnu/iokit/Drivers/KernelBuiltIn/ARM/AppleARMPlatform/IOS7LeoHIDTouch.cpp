@@ -1,5 +1,5 @@
 /* HTC HD2 integration/publication changes: Garysss123, 2026-10-04. Original license notices are preserved. */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
 /* Real Type2A controller reports through the original iOS7 IOHIDLib queue.
  * PL050, synthetic contacts, buttons and userland routing helpers are absent. */
 #include <IOKit/IOService.h>
@@ -234,11 +234,19 @@ int IOHIDEventService::delayMicroseconds(void *,uint32_t microseconds)
 }
 bool IOHIDEventService::publishProperties(void)
 {
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+ setName("IOS7J1Touch");setProperty("HIDServiceSupport",true);
+ setProperty("IOS7LabBackend","Samsung J1 touch stub native HID queue (no-input)");
+ setProperty("PrimaryUsagePage",13,32);setProperty("PrimaryUsage",4,32);
+ setProperty("Built-In",true);setProperty("DisplayIntegrated",true);
+ setProperty("Transport","I2C");setProperty("Product","J1 touch stub");
+#else
  setName("IOS7LeoType2ATouch");setProperty("HIDServiceSupport",true);
  setProperty("IOS7LabBackend","HTC Leo physical Type2A I2C native HID queue");
  setProperty("PrimaryUsagePage",13,32);setProperty("PrimaryUsage",4,32);
  setProperty("Built-In",true);setProperty("DisplayIntegrated",true);
  setProperty("Transport","I2C");setProperty("Product","HTC Leo Type2A touch");
+#endif
  setProperty("Manufacturer","HD2 legacy lab");setProperty("VendorID",(unsigned long long)0,32);
  setProperty("ProductID",1,32);setProperty("ReportInterval",20000,32);setProperty("QueueSize",4096,32);
  OSDictionary *pair=OSDictionary::withCapacity(2);OSArray *pairs=OSArray::withCapacity(1);
@@ -262,6 +270,18 @@ bool IOHIDEventService::start(IOService *provider)
  lock=IOLockAlloc();queue=new IOS7LeoHIDQueue;
  if(!lock || !queue || !queue->initWithCapacity(4096))return false;
  queueMemory=queue->getMemoryDescriptor();if(!queueMemory)return false;
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+ /* J1: no touch controller mapped yet; publish HID service with no-input
+  * transport so SpringBoard GUI shows. Swipe wired later. */
+ state.ready=1; state.stage=7;
+ initValid=1; initResult=0; publishSnapshot();
+ loop=IOWorkLoop::workLoop();timer=IOTimerEventSource::timerEventSource(this,tick);
+ if(!loop || !timer || loop->addEventSource(timer)!=kIOReturnSuccess)return false;
+ if(!publishProperties())return false;
+ if(timer->setTimeoutMS(20)!=kIOReturnSuccess)return false;
+ IOLog("IOS7J1 TOUCH service-ready stub physical480x800 queue4096; no-input\n");
+ return true;
+#else
  static const uint32_t physical[LEO_TOUCH_REGIONS]={0xa9900000U,0xa8600000U,0xa9000000U,0xa9100000U};
  for(unsigned n=0;n<LEO_TOUCH_REGIONS;n++){
   device[n]=IOMemoryDescriptor::withPhysicalAddress(physical[n],4096,kIODirectionInOut);
@@ -283,6 +303,7 @@ bool IOHIDEventService::start(IOService *provider)
  if(timer->setTimeoutMS(20)!=kIOReturnSuccess)return false;
  IOLog("IOS7LEO TOUCH service-ready usage13/4 physical480x800 native204B queue4096; not-gesture-proof\n");
  return true;
+#endif
 }
 void IOHIDEventService::free(void)
 {
@@ -335,6 +356,10 @@ void IOHIDEventService::poll(void)
   if(!queue->sane() || !queue->enqueue(&pendingPacket,sizeof(pendingPacket))){leo_touch_inc(&queueFailures);publishSnapshot();IOLockUnlock(lock);return;}
   commitPacket();
  }
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+ /* J1 stub: no controller yet, no input, keep service alive for GUI. */
+ IOLockUnlock(lock); return;
+#else
  LeoTouchReport report;int result=leo_touch_transport_poll(&state,&report);
  if(result<0){
   publishSnapshot();
@@ -358,6 +383,7 @@ void IOHIDEventService::poll(void)
   if(queueErrors<4U){++queueErrors;IOLog("IOS7LEO TOUCH queue-full-or-invalid; retained pending actual contact, no new hardware read\n");}
  }else commitPacket();
  IOLockUnlock(lock);
+#endif
 }
 void IOHIDEventService::closeReader(void)
 {

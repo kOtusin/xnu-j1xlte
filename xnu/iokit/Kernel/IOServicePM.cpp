@@ -870,9 +870,13 @@ void IOService::handlePMstop ( IOPMRequest * request )
 IOReturn IOService::addPowerChild ( IOService * child )
 {
 	IOPowerConnection *	connection  = 0;
-	IOPMRequest *		requests[3] = {0, 0, 0};
+	IOPMRequest *		requests[3];
     OSIterator *		iter;
 	bool				ok = true;
+
+	requests[0] = 0;
+	requests[1] = 0;
+	requests[2] = 0;
 
 	if (!child)
 		return kIOReturnBadArgument;

@@ -157,7 +157,7 @@ static int			gOutstandingJobs;
 static int			gNumConfigThreads;
 static int			gNumWaitingThreads;
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
 
 static unsigned ios7leo_match_role(IOService *target)
 {
@@ -200,6 +200,10 @@ extern "C" __attribute__((noinline)) void ios7leo_match_note(unsigned stage,unsi
 
 #endif
 /* IOS7LEO_MATCH_END */
+
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+extern "C" void j1_klog(const char *s) { IOLog("%s", s); }
+#endif
 
 static IOLock *			gIOServiceBusyLock;
 
@@ -765,7 +769,7 @@ IOReturn IOService::catalogNewDrivers( OSOrderedSet * newTables )
 						IOOptionBits options )
 {
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
     unsigned leo_role=ios7leo_match_role(nub);
 #endif
 /* IOS7LEO_MATCH_END */
@@ -779,7 +783,7 @@ IOReturn IOService::catalogNewDrivers( OSOrderedSet * newTables )
     }
 
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
     if (leo_role) ios7leo_match_note(1,leo_role,nub,0,job!=0,0,0,0,0,0);
 #endif
 /* IOS7LEO_MATCH_END */
@@ -2661,7 +2665,7 @@ bool IOService::invokeNotifer( _IOServiceNotifier * notify )
 void IOService::probeCandidates( OSOrderedSet * matches )
 {
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
     unsigned leo_role=ios7leo_match_role(this);
 #endif
 /* IOS7LEO_MATCH_END */
@@ -2840,13 +2844,13 @@ void IOService::probeCandidates( OSOrderedSet * matches )
     
 
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
                 if (leo_role) ios7leo_match_note(4,leo_role,this,symbol->getCStringNoCopy(),0,0,0,0,0,0);
 #endif
 /* IOS7LEO_MATCH_END */
                 newInst = inst->probe( this, &score );
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
                 if (leo_role) ios7leo_match_note(5,leo_role,this,symbol->getCStringNoCopy(),newInst!=0,0,0,0,0,0);
 #endif
 /* IOS7LEO_MATCH_END */
@@ -2925,7 +2929,7 @@ void IOService::probeCandidates( OSOrderedSet * matches )
 #endif
                 if( false == started)
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
                 {
                     if (leo_role) ios7leo_match_note(6,leo_role,this,inst->getMetaClass()->getClassName(),0,0,0,0,0,0);
 #endif
@@ -2933,7 +2937,7 @@ void IOService::probeCandidates( OSOrderedSet * matches )
 
                     started = startCandidate( inst );
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
                     if (leo_role) ios7leo_match_note(7,leo_role,this,inst->getMetaClass()->getClassName(),started,0,0,0,0,0);
                 }
 #endif
@@ -3184,7 +3188,7 @@ void _IOConfigThread::free( void )
 void IOService::doServiceMatch( IOOptionBits options )
 {
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
     unsigned leo_role=ios7leo_match_role(this);
     if (leo_role) ios7leo_match_note(3,leo_role,this,0,0,0,0,0,0,0);
 #endif
@@ -3271,13 +3275,13 @@ void IOService::doServiceMatch( IOOptionBits options )
 
 
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
     if (leo_role) ios7leo_match_note(8,leo_role,this,0,0,0,0,0,0,0);
 #endif
 /* IOS7LEO_MATCH_END */
     _adjustBusy( -1 );
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
     if (leo_role) ios7leo_match_note(9,leo_role,this,0,__state[1] & kIOServiceBusyStateMask,0,0,0,0,0);
 #endif
 /* IOS7LEO_MATCH_END */
@@ -3405,7 +3409,7 @@ IOReturn IOService::waitForState( UInt32 mask, UInt32 value,
 				   uint64_t timeout )
 {
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
     unsigned leo_role=ios7leo_match_role(this);
     if(leo_role && mask==kIOServiceBusyStateMask && value==0)
         ios7leo_match_note(10,leo_role,this,0,0,__state[0],__state[1],gOutstandingJobs,gNumWaitingThreads,gNumConfigThreads);
@@ -3517,7 +3521,7 @@ void _IOConfigThread::main(void * arg, wait_result_t result)
 
 	  nub = job->nub;
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
           unsigned leo_role=ios7leo_match_role(nub);
 #endif
 /* IOS7LEO_MATCH_END */
@@ -3531,7 +3535,7 @@ void _IOConfigThread::main(void * arg, wait_result_t result)
 
 	    case kMatchNubJob:
 /* IOS7LEO_MATCH_BEGIN */
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
                 if (leo_role) ios7leo_match_note(2,leo_role,nub,0,0,0,0,0,0,0);
 #endif
 /* IOS7LEO_MATCH_END */

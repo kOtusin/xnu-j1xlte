@@ -296,6 +296,12 @@ int IODTGetDefault(const char *key, void *infoAddr, unsigned int infoSize )
     OSData			*defaultObj;
     unsigned int		defaultSize;
 
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+    /* Early boot (sched_init etc.) runs before the registry/plane exist;
+     * report "no default" so callers use their built-in defaults. */
+    if (gIODTPlane == 0)
+        return -1;
+#endif
     defaults = IORegistryEntry::fromPath( "/defaults", gIODTPlane );
     if ( defaults == 0 ) return -1;
 

@@ -24,12 +24,15 @@ bool AppleARMPE::init(OSDictionary * propTable)
 }
 
 extern const IORegistryPlane *gIODTPlane;
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
 extern void ios7leo_register_sd(IOService *platform);
 extern void ios7leo_register_display(IOService *platform);
 extern void ios7leo_prepare_root_file();
 extern void ios7leo_register_hid_touch(IOService *platform);
 extern "C" void ios7leo_prepare_log_reader(void);
+#endif
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+extern void ios7j1_register_sd(IOService *platform);
 #endif
 #if BOARD_CONFIG_ARMPBA8
 extern void ios7lab_register_display(IOService *platform);
@@ -83,11 +86,15 @@ bool AppleARMPE::start(IOService * provider)
     ios7lab_register_hid_touch(this);
     ios7lab_register_sd(this);
 #endif
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
     ios7leo_register_display(this);
     ios7leo_prepare_root_file();
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+    ios7j1_register_sd(this);
+#else
     ios7leo_prepare_log_reader(); /* optional owned logger before rawmedia publication */
     ios7leo_register_sd(this);
+#endif
     ios7leo_register_hid_touch(this);
 #endif
     return true;

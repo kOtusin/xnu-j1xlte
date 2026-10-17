@@ -46,3 +46,12 @@ iokit/Drivers/KernelBuiltIn/ARM/AppleARMPlatform/IOS7LeoSDCC2.cpp optional iokit
 iokit/Drivers/KernelBuiltIn/ARM/AppleARMPlatform/IOS7LeoHFSFile.cpp optional iokitcpp
 iokit/Drivers/KernelBuiltIn/ARM/AppleARMPlatform/leo_sdcc.c standard
 iokit/Drivers/KernelBuiltIn/ARM/AppleARMPlatform/fat_locator.c standard
+iokit/Drivers/KernelBuiltIn/ARM/AppleARMPlatform/leo_cow.c standard
+iokit/Drivers/KernelBuiltIn/ARM/AppleARMPlatform/leo_log_format.c standard
+iokit/Drivers/KernelBuiltIn/ARM/AppleARMPlatform/leo_log_locator.c standard
+iokit/Drivers/KernelBuiltIn/ARM/AppleARMPlatform/leo_touch_transport.c standard
+iokit/Drivers/KernelBuiltIn/ARM/AppleARMPlatform/IOS7LeoDisplay.cpp optional iokitcpp
+iokit/Drivers/KernelBuiltIn/ARM/AppleARMPlatform/IOS7LeoHIDTouch.cpp optional iokitcpp
+# J1 Exynos3475 SDMMC (DW-MMC PIO) block device
+iokit/Drivers/KernelBuiltIn/ARM/AppleARMPlatform/IOS7J1SDMMC.cpp optional iokitcpp
+iokit/Drivers/KernelBuiltIn/ARM/AppleARMPlatform/j1_sdmmc.c standard

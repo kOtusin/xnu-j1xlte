@@ -43,7 +43,7 @@ const char * gIOKernelConfigTables =
 #ifdef __arm__
 "   {"
 "     'IOClass'         = AppleARMPE;"
-#ifdef BOARD_CONFIG_QSD8250_LEO
+#if BOARD_CONFIG_QSD8250_LEO
 "     'IONameMatch'     = 'qsd8250,htcleo';"
 #else
 "     'IONameMatch'     = 'AppleARM';"

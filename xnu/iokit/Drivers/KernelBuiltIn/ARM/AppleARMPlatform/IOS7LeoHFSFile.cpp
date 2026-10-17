@@ -1,4 +1,4 @@
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
 /* Real readonly SD-backed file media. Original009 PAL/adapter are reused intact. */
 #include <IOKit/storage/IOBlockStorageDevice.h>
 #include <IOKit/storage/IOBlockStorageDriver.h>
@@ -131,7 +131,7 @@ IOService *IOS7LeoHFSFile::probe(IOService *provider,SInt32 *)
  if(!media||!media->isWhole())return 0;
  IOBlockStorageDriver *driver=OSDynamicCast(IOBlockStorageDriver,media->getProvider());
  IOService *device=driver?driver->getProvider():0;
- return device&&device->metaCast("IOS7LeoSDCC2")?this:0;
+ return (device->metaCast("IOS7LeoSDCC2")||device->metaCast("IOS7J1SDMMC"))?this:0;
 }
 IOReturn IOS7LeoHFSFile::readPhysical(UInt64 lba,UInt8 bytes[512])
 {
@@ -183,7 +183,7 @@ void IOS7LeoHFSFile::initializeReadCache()
  if(!managed||charge>9U||charge>(managed>>3)||freePages<=guard||charge>(freePages-guard)/2U)return;
  IOBlockStorageDriver *driver=OSDynamicCast(IOBlockStorageDriver,raw->getProvider());
  IOBlockStorageDevice *device=driver?OSDynamicCast(IOBlockStorageDevice,driver->getProvider()):0;
- if(!device||!device->metaCast("IOS7LeoSDCC2"))return;
+ if(!device||(!device->metaCast("IOS7LeoSDCC2")&&!device->metaCast("IOS7J1SDMMC")))return;
  leo_read_cache *candidate=(leo_read_cache *)IOMalloc(sizeof(*candidate));if(!candidate)return;
  leo_read_cache_init(candidate,image.image_sectors); /* Touch owned pages before the postallocation guard. */
  guard=(managed>>2)+(uint64_t)vm_page_free_reserved+vm_page_free_target;

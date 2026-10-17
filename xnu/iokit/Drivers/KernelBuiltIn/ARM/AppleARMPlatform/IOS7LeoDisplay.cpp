@@ -1,4 +1,4 @@
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
 /* Leo adaptation of proven original iOS7 CPU surface/discovery wire. */
 #include <IOKit/IOService.h>
 #include <IOKit/IOUserClient.h>
@@ -9,8 +9,23 @@
 #include <IOKit/IOTimerEventSource.h>
 #include <libkern/OSAtomic.h>
 #include "IOS7LabSurfaceGeometry.h"
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+/* J1 backend: direct-FB present/ready/completed (see pe_exynos3475_j1.c). */
+extern "C" {
+int ios7j1_display_ready(void);
+int ios7j1_display_present(const unsigned char *px,unsigned int bytes,unsigned int row,
+                           unsigned int fmt,unsigned long long *seq);
+int ios7j1_display_completed(unsigned long long seq);
+}
+#define ios7leo_display_ready ios7j1_display_ready
+#define ios7leo_display_present(px,bytes,row,fmt,seq) ios7j1_display_present((const unsigned char*)(px),(bytes),(row),(fmt),(unsigned long long*)(seq))
+#define ios7leo_display_completed(s) ios7j1_display_completed((unsigned long long)(s))
+/* Memory-room check is PE-agnostic; reuse Leo observation header types. */
+#include "IOS7LeoDisplayObservation.h"
+#else
 #include "IOS7LeoDisplayBackend.h"
 #include "IOS7LeoDisplayObservation.h"
+#endif
 #include "IOS7LeoGraphicsState.h"
 #include <mach/vm_param.h>
 extern "C" {
@@ -197,7 +212,7 @@ extern "C" uint32_t ios7leo_graphics_event_take(LeoGraphicsEvent *out,uint32_t *
     *out=leo_graphics_events[leo_graphics_state.events_taken++];leo_graphics_unlock();return 1;
 }
 
-#if defined(BOARD_CONFIG_QSD8250_LEO)
+#if defined(BOARD_CONFIG_QSD8250_LEO) || defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
 static IOLock *primaryLock;
 static IOMemoryDescriptor *primaryPixels;
 static IOBufferMemoryDescriptor *primaryControl;
@@ -1547,10 +1562,18 @@ void ios7leo_register_display(IOService *platform)
         if(display)display->release();if(surfaces)surfaces->release();
         IOLog("Leo display registration failed; no provider published\n");return;
     }
-    surfaces->setName("IOCoreSurfaceRoot");surfaces->setProperty("IOS7LabBackend","Leo owned BGRA CPU surface / real MDP RGB565");
+    surfaces->setName("IOCoreSurfaceRoot");
+#if defined(BOARD_CONFIG_EXYNOS3475_J1XLTE)
+    surfaces->setProperty("IOS7LabBackend","J1 owned BGRA CPU surface / direct FB RGB565");
+    display->setName("IOS7J1FB");display->setProperty("IOS7LabBackend","Samsung J1 DECON direct RGB565 480x800");
+    surfaces->registerService();display->registerService();
+    IOLog("J1 native display provider published480x800 BGRA row1920 bytes1536000; physicalRGB565 row960 separate; dynamicbudget=%u\n",displayBudget);
+#else
+    surfaces->setProperty("IOS7LabBackend","Leo owned BGRA CPU surface / real MDP RGB565");
     display->setName("IOS7LeoMDP31");display->setProperty("IOS7LabBackend","HTC Leo MDP31/MDDI native RGB565");
     surfaces->registerService();display->registerService();
     IOLog("Leo native display provider published480x800 BGRA row1920 bytes1536000; physicalRGB565 row960 separate; dynamicbudget=%u\n",displayBudget);
+#endif
     surfaces->release();display->release();
 }
 #endif
